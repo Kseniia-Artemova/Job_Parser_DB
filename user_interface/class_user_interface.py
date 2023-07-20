@@ -202,7 +202,7 @@ class User_Interface:
                 vacancy_object = Vacancy_HH(vacancy)
                 self.vacancies[vacancy.get("id")] = vacancy_object
                 print()
-                print(vacancy_object.__dict__.items(), sep="\n")
+                vacancy_object.show_info()
 
     def show_vacancies_info(self):
         print(*self.vacancies, sep="\n")

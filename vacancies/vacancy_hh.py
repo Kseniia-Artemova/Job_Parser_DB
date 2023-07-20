@@ -43,8 +43,9 @@ class Vacancy_HH(Vacancy):
                f"employer_id='{self.employer_id}'" \
                f")"
 
-    def get_info(self):
-        pass
+    def show_info(self):
+        for key, value in self.__dict__.items():
+            print(f"{key}: {value}")
 
 
 
