@@ -1,17 +1,21 @@
 import requests
 import json
-from pprint import pprint
+import psycopg2
+import os
 
 from companies.company_hh import Company_HH
 from vacancies.vacancy_hh import Vacancy_HH
+from utils import config
 
 
 class User_Interface:
-
     url_companies = "https://api.hh.ru/employers"
     url_vacancies = "https://api.hh.ru/vacancies"
 
     max_vacancies = 500
+    db_name = "my_vacancies"
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    path_to_table_script = os.path.join(project_root, "db_manager", "tables_creation.sql")
 
     def __init__(self):
 
@@ -73,47 +77,6 @@ class User_Interface:
             command = self._accept_command()
             self._run_command(command)
 
-    def _accept_command(self):
-        while True:
-            command = input("\nКоманда: ").lower().strip()
-            if command not in self.commands:
-                print("Такая команда не существует. Попробуйте ещё раз.")
-                continue
-
-            return command
-
-    def _run_command(self, command):
-        self.commands[command][1]()
-
-    @staticmethod
-    def _get_response(url, parameters=None):
-        with requests.get(url, parameters) as request:
-            response = request.content.decode("utf-8")
-            response = json.loads(response)
-
-        return response
-
-    def _cyclic_response(self, url, text, number=None):
-        page = 0
-        per_page = 50
-        parameters = {"text": text, "page": page, "per_page": per_page}
-        results = []
-
-        while True:
-            response = self._get_response(url, parameters)
-            results.extend(response["items"])
-
-            total_pages = response.get("pages")
-            parameters["page"] += 1
-
-            if number and len(results) > number:
-                break
-
-            if parameters["page"] >= total_pages:
-                break
-
-        return results
-
     @staticmethod
     def exit():
         print("\nВсего доброго! Заходите ещё!")
@@ -173,10 +136,8 @@ class User_Interface:
         print(f"Успешно удалены компании: {', '.join(removed_companies)}")
 
     def show_company_list(self):
-        for company_id, company_info in self.companies.items():
-            print(f"\nid: {company_id}"
-                  f"\nНазвание: {company_info.name}"
-                  f"\nurl: {company_info.url}")
+        for company in self.companies.values():
+            print(f"{company}")
 
     # команды, связанные с вакансиями
     def find_vacancies(self):
@@ -203,13 +164,143 @@ class User_Interface:
                 self.vacancies[vacancy.get("id")] = vacancy_object
                 print()
                 vacancy_object.show_info()
+        print(f"\nВсего найдено {len(results)} вакансий по такому запросу."
+              f"\nРезультаты запроса добавлены в общий список.")
 
     def show_vacancies_info(self):
         print(*self.vacancies, sep="\n")
 
     # команды, связанные с базой данных
     def save_to_db(self):
-        pass
+        parameters_db = config()
+
+        self._create_db(parameters_db)
+
+        with psycopg2.connect(dbname=self.db_name, **parameters_db) as conn:
+            with conn.cursor() as cur:
+                cur.execute(self._read_file(self.path_to_table_script))
+
+                self._save_companies(cur)
+                self._save_vacancies(cur)
 
     def enter_db(self):
         pass
+
+    # вспомогательные
+    def _create_db(self, parameters):
+        db_name = "postgres"
+
+        conn = psycopg2.connect(dbname=db_name, **parameters)
+        cur = conn.cursor()
+        conn.autocommit = True
+
+        try:
+            cur.execute(f"DROP DATABASE {self.db_name}")
+        except psycopg2.errors.InvalidCatalogName:
+            pass
+        finally:
+            cur.execute(f"CREATE DATABASE {self.db_name}")
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def _read_file(path):
+        with open(path, "r", encoding="UTF-8") as file:
+            return file.read()
+
+    @staticmethod
+    def _get_insert_string(table_name, fields):
+
+        field_names = ", ".join(fields)
+        fields_number = ", ".join(['%s'] * len(fields))
+
+        return f"""
+               INSERT INTO {table_name} ({field_names})
+               VALUES ({fields_number})
+               """
+
+    def _save_companies(self, cur):
+        for company in self.companies.values():
+            fields = (
+                "employer_id",
+                "name",
+                "url",
+                "open_vacancies"
+            )
+            values = (
+                company.company_id,
+                company.name,
+                company.url,
+                str(company.open_vacancies)
+            )
+            print(self._get_insert_string("employers", fields), values)
+            cur.execute(self._get_insert_string("employers", fields), values)
+
+    def _save_vacancies(self, cur):
+        for vacancy in self.vacancies.values():
+
+            salary_min = str(vacancy.salary[0]) if vacancy.salary else None
+            salary_max = str(vacancy.salary[1]) if vacancy.salary else None
+
+            fields = (
+                "vacancy_id",
+                "name",
+                "city",
+                "currency",
+                "salary_min",
+                "salary_max",
+                "url",
+                "employer_id"
+            )
+            values = (
+                vacancy.vacancy_id,
+                vacancy.name,
+                vacancy.city,
+                vacancy.currency,
+                salary_min,
+                salary_max,
+                vacancy.url,
+                vacancy.employer_id
+            )
+            cur.execute(self._get_insert_string("vacancies", fields), values)
+
+    def _accept_command(self):
+        while True:
+            command = input("\nКоманда: ").lower().strip()
+            if command not in self.commands:
+                print("Такая команда не существует. Попробуйте ещё раз.")
+                continue
+
+            return command
+
+    def _run_command(self, command):
+        self.commands[command][1]()
+
+    @staticmethod
+    def _get_response(url, parameters=None):
+        with requests.get(url, parameters) as request:
+            response = request.content.decode("utf-8")
+            response = json.loads(response)
+
+        return response
+
+    def _cyclic_response(self, url, text, number=None):
+        page = 0
+        per_page = 50
+        parameters = {"text": text, "page": page, "per_page": per_page}
+        results = []
+
+        while True:
+            response = self._get_response(url, parameters)
+            results.extend(response["items"])
+
+            total_pages = response.get("pages")
+            parameters["page"] += 1
+
+            if number and len(results) > number:
+                break
+
+            if parameters["page"] >= total_pages:
+                break
+
+        return results

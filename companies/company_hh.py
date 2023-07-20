@@ -12,4 +12,4 @@ class Company_HH(Company):
     open_vacancies: int
 
     def __str__(self):
-        return f"{self.name}(id: {self.company_id})"
+        return f"{self.name} (id: {self.company_id})"
