@@ -40,7 +40,7 @@ CREATE TABLE employers (
 CREATE TABLE vacancies (
     vacancy_id int,
     name varchar(100) NOT NULL,
-    city varchar(50) NOT NULL,
+    location varchar(50) NOT NULL,
     currency varchar(3),
     salary_min int,
     salary_max int,

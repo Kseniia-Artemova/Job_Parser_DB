@@ -1,15 +1,13 @@
 import psycopg2
-import os
 
-from utils import config
+from database.db_creator import DB_Creator
 from request.request_hh import Request_HH
 
 
 class User_Interface:
 
-    db_name = "my_vacancies"
-    project_root = os.path.dirname(os.path.dirname(__file__))
-    path_to_table_script = os.path.join(project_root, "db_manager", "tables_creation.sql")
+    table_name_employers = "employers"
+    table_name_vacancies = "vacancies"
 
     def __init__(self):
 
@@ -26,9 +24,6 @@ class User_Interface:
             "add employers":
                 ("Добавить компании в список для поиска вакансий (для добавления используется id компании)",
                  self.request_hh.add_employers),
-            "remove employers":
-                ("Удалить компании из списка поиска по их id",
-                 self.request_hh.remove_employers),
             "show employers":
                 ("Показать список компаний, которые используются при поиске вакансий",
                  self.request_hh.show_employers_info),
@@ -78,19 +73,9 @@ class User_Interface:
 
     # команды, связанные с базой данных
     def save_to_db(self):
-        parameters_db = config()
-
-        self._create_db(parameters_db)
-
-        with psycopg2.connect(dbname=self.db_name, **parameters_db) as conn:
-            with conn.cursor() as cur:
-                cur.execute(self._read_file(self.path_to_table_script))
-
-                self._save_employers(cur)
-                self._save_vacancies(cur)
-
-            cur.close()
-        conn.close()
+        database = DB_Creator()
+        database.save_to_db(self.table_name_employers, self.request_hh.employers)
+        database.save_to_db(self.table_name_vacancies, self.request_hh.vacancies)
 
         print("\nДанные сохранены в базу данных.")
 
@@ -98,84 +83,6 @@ class User_Interface:
         pass
 
     # вспомогательные
-    def _create_db(self, parameters):
-        db_name = "postgres"
-
-        conn = psycopg2.connect(dbname=db_name, **parameters)
-        cur = conn.cursor()
-        conn.autocommit = True
-
-        try:
-            cur.execute(f"DROP DATABASE {self.db_name}")
-        except psycopg2.errors.InvalidCatalogName:
-            pass
-        finally:
-            cur.execute(f"CREATE DATABASE {self.db_name}")
-            cur.close()
-            conn.close()
-
-    @staticmethod
-    def _read_file(path):
-        with open(path, "r", encoding="UTF-8") as file:
-            return file.read()
-
-    @staticmethod
-    def _get_insert_string(table_name, fields):
-
-        field_names = ", ".join(fields)
-        fields_number = ", ".join(['%s'] * len(fields))
-
-        return f"""
-               INSERT INTO {table_name} ({field_names})
-               VALUES ({fields_number})
-               """
-
-    def _save_employers(self, cur):
-        for employer in self.request_hh.employers.values():
-            fields = (
-                "employer_id",
-                "name",
-                "url",
-                "open_vacancies"
-            )
-            values = (
-                employer.employer_id,
-                employer.name,
-                employer.url,
-                employer.open_vacancies
-            )
-            values = tuple(map(self._convert_to_str, values))
-            cur.execute(self._get_insert_string("employers", fields), values)
-
-    def _save_vacancies(self, cur):
-        for vacancy in self.request_hh.vacancies.values():
-
-            salary_min = vacancy.salary[0] if vacancy.salary else None
-            salary_max = vacancy.salary[1] if vacancy.salary else None
-
-            fields = (
-                "vacancy_id",
-                "name",
-                "city",
-                "currency",
-                "salary_min",
-                "salary_max",
-                "url",
-                "employer_id"
-            )
-            values = (
-                vacancy.vacancy_id,
-                vacancy.name,
-                vacancy.city,
-                vacancy.currency,
-                salary_min,
-                salary_max,
-                vacancy.url,
-                vacancy.employer_id
-            )
-            values = tuple(map(self._convert_to_str, values))
-            cur.execute(self._get_insert_string("vacancies", fields), values)
-
     def _accept_command(self):
         while True:
             command = input("\nКоманда: ").lower().strip()
@@ -187,9 +94,3 @@ class User_Interface:
 
     def _run_command(self, command):
         self.commands[command][1]()
-
-    @staticmethod
-    def _convert_to_str(value):
-        if not value:
-            return
-        return str(value)

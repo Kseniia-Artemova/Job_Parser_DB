@@ -18,14 +18,17 @@ class Request_HH:
     def find_employers(self):
         employer_name = input("\nВведите название компании: ").lower().strip()
 
-        results = self._cyclic_response(self.url_employers, employer_name)
+        print("\nПодождите минутку, ищу подходящие компании...")
 
-        print(f"\nВсего найдено: {len(results)}")
+        results = self._cyclic_response(self.url_employers, employer_name)
 
         for result in results:
             print(f"\nid: {result.get('id')}"
                   f"\nНазвание: {result.get('name')}"
-                  f"\nurl: {result.get('alternate_url')}")
+                  f"\nurl: {result.get('alternate_url')}"
+                  f"\nОткрытых вакансий: {result.get('open_vacancies')}")
+
+        print(f"\nВсего найдено: {len(results)}")
 
     def add_employers(self):
         new_employers = {}
@@ -53,20 +56,6 @@ class Request_HH:
 
         self.employers.update(new_employers)
 
-    def remove_employers(self):
-        removed_employers = []
-        employer_ids = input("\nВведите id компании или компаний, которые следует удалить."
-                             "\nid должны вводиться в одну строку и разделаться пробелом."
-                             "\nНапример: 19833 67432 87566723\n").split()
-
-        for employer_id in employer_ids:
-            employer_info = self.employers.pop(employer_id.strip(), False)
-            if employer_info:
-                removed_employers.append(employer_info)
-
-        removed_employers = list(map(str, removed_employers))
-        print(f"Успешно удалены компании: {', '.join(removed_employers)}")
-
     def show_employers_info(self):
         if not self.employers:
             print("\nСписок компаний пуст.")
@@ -75,6 +64,7 @@ class Request_HH:
             print(f"{employer}")
 
     def clear_employers(self):
+        self.vacancies.clear()
         self.employers.clear()
         print("\nСписок компаний очищен.")
 
