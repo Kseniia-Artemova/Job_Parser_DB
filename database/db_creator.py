@@ -4,6 +4,7 @@ import os
 from utils import config
 from vacancy.vacancy_abc import Vacancy
 from employer.employer_abc import Employer
+from configparser import ConfigParser
 
 
 class DB_Creator:
