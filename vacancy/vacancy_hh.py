@@ -1,6 +1,6 @@
 import requests
 
-from vacancies.vacancy_ABC import Vacancy
+from vacancy.vacancy_abc import Vacancy
 
 
 class Vacancy_HH(Vacancy):

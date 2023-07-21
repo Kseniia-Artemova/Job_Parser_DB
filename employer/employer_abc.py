@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
 
-class Company(ABC):
+class Employer(ABC):
 
     pass
