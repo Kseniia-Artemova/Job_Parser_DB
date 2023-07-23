@@ -2,9 +2,7 @@ import psycopg2
 import os
 
 from utils import config
-from vacancy.vacancy_abc import Vacancy
-from employer.employer_abc import Employer
-from configparser import ConfigParser
+from entity.entity_abc import Entity
 
 
 class DB_Creator:
@@ -49,7 +47,7 @@ class DB_Creator:
 
         conn.close()
 
-    def save_to_db(self, table_name, data: dict[Vacancy | Employer]):
+    def save_to_db(self, table_name, data: dict[Entity]):
 
         conn = psycopg2.connect(**self.parameters_db)
         cur = conn.cursor()

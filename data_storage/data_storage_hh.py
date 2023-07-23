@@ -1,11 +1,13 @@
 import requests
 import json
 
-from vacancy.vacancy_hh import Vacancy_HH
-from employer.employer_hh import Employer_HH
+from data_storage.data_storage_abc import Data_Storage
+from entity.vacancy_hh import Vacancy_HH
+from entity.employer_hh import Employer_HH
 
 
-class Request_HH:
+class Data_Storage_HH(Data_Storage):
+
     url_employers = "https://api.hh.ru/employers"
     url_vacancies = "https://api.hh.ru/vacancies"
     max_vacancies = 500
@@ -60,6 +62,7 @@ class Request_HH:
         if not self.employers:
             print("\nСписок компаний пуст.")
             return
+        print()
         for employer in self.employers.values():
             print(f"{employer}")
 
@@ -99,14 +102,17 @@ class Request_HH:
                 vacancy_object = Vacancy_HH(vacancy)
                 self.vacancies[vacancy.get("id")] = vacancy_object
                 print()
-                vacancy_object.show_info()
+                print(vacancy_object.get_info())
         print(f"\nВсего найдено {len(results)} вакансий по такому запросу."
               f"\nРезультаты запроса добавлены в общий список.")
 
     def show_vacancies_info(self):
-        for vacancy in self.vacancies:
+        if not self.vacancies:
+            print("\nСписок вакансий пуст.")
+            return
+        for vacancy in self.vacancies.values():
             print()
-            vacancy.show_info()
+            print(vacancy.get_info())
 
     def clear_vacancies(self):
         self.vacancies.clear()

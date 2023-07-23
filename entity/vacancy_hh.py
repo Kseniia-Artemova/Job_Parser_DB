@@ -1,9 +1,9 @@
 import requests
 
-from vacancy.vacancy_abc import Vacancy
+from entity.entity_abc import Entity
 
 
-class Vacancy_HH(Vacancy):
+class Vacancy_HH(Entity):
 
     cbr_rate_url = "https://www.cbr-xml-daily.ru/daily_json.js"
 
@@ -82,10 +82,6 @@ class Vacancy_HH(Vacancy):
 
         return number_rub
 
-    def show_info(self):
-        for key, value in self.__dict__.items():
-            print(f"{key}: {value}")
-
     def get_fields(self):
         fields = []
         for key in self.__dict__.keys():
@@ -105,9 +101,3 @@ class Vacancy_HH(Vacancy):
             values.append(value)
 
         return tuple(map(self._convert_to_str, values))
-
-    @staticmethod
-    def _convert_to_str(value):
-        if not value:
-            return
-        return str(value)

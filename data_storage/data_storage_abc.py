@@ -1,14 +1,9 @@
 from abc import ABC, abstractmethod
 
 
-class Request(ABC):
+class Data_Storage(ABC):
 
     max_vacancies = None
-
-    def __init__(self):
-
-        self.vacancies = {}
-        self.employers = {}
 
     @abstractmethod
     def find_employers(self):

@@ -26,7 +26,7 @@ DROP TABLE IF EXISTS employers CASCADE;
 
 CREATE TABLE employers (
     employer_id int,
-    name varchar(100) NOT NULL,
+    name varchar(200) NOT NULL,
     url varchar(50) NOT NULL,
     open_vacancies int,
 
@@ -39,7 +39,7 @@ CREATE TABLE employers (
 
 CREATE TABLE vacancies (
     vacancy_id int,
-    name varchar(100) NOT NULL,
+    name varchar(200) NOT NULL,
     location varchar(50) NOT NULL,
     currency varchar(3),
     salary_min int,

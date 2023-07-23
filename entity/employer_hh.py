@@ -1,10 +1,10 @@
 import dataclasses
 
-from employer.employer_abc import Employer
+from entity.entity_abc import Entity
 
 
 @dataclasses.dataclass
-class Employer_HH(Employer):
+class Employer_HH(Entity):
 
     employer_id: str
     name: str
@@ -19,13 +19,3 @@ class Employer_HH(Employer):
 
     def get_values(self):
         return tuple(map(self._convert_to_str, self.__dict__.values()))
-
-    @staticmethod
-    def _convert_to_str(value):
-        if not value:
-            return
-        return str(value)
-
-    def get_info(self):
-        employer_info = "\n".join([f"{key}: {value}" for key, value in self.__dict__.items()])
-        return employer_info

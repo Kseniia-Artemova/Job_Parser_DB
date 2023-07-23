@@ -1,7 +1,5 @@
-import psycopg2
-
 from database.db_creator import DB_Creator
-from request.request_hh import Request_HH
+from data_storage.data_storage_hh import Data_Storage_HH
 
 
 class User_Interface:
@@ -11,7 +9,7 @@ class User_Interface:
 
     def __init__(self):
 
-        self.request_hh = Request_HH()
+        self.data_storage_hh = Data_Storage_HH()
 
         # псевдоним_команды: (описание, команда)
         self.commands = {
@@ -20,26 +18,26 @@ class User_Interface:
                  self.show_menu),
             "find employers":
                 ("Найти и вывести компании по названию",
-                 self.request_hh.find_employers),
+                 self.data_storage_hh.find_employers),
             "add employers":
                 ("Добавить компании в список для поиска вакансий (для добавления используется id компании)",
-                 self.request_hh.add_employers),
+                 self.data_storage_hh.add_employers),
             "show employers":
                 ("Показать список компаний, которые используются при поиске вакансий",
-                 self.request_hh.show_employers_info),
+                 self.data_storage_hh.show_employers_info),
             "clear employers":
                 ("Очистить список компаний, которые используются при поиске вакансий. "
                  f"\033[31mБудьте осторожны, это также очистит список найденных вакансий!\033[0m",
-                 self.request_hh.clear_employers),
+                 self.data_storage_hh.clear_employers),
             "find vacancies":
                 ("Найти вакансии. Если список компаний не пуст, будут найдены вакансии этих компаний",
-                 self.request_hh.find_vacancies),
+                 self.data_storage_hh.find_vacancies),
             "show vacancies":
                 ("Вывести на экран информацию о найденных вакансиях",
-                 self.request_hh.show_vacancies_info),
+                 self.data_storage_hh.show_vacancies_info),
             "clear vacancies":
                 ("Очистить список найденных вакансий",
-                 self.request_hh.clear_vacancies),
+                 self.data_storage_hh.clear_vacancies),
             "save to db":
                 ("Сохранить найденные вакансии в базу данных",
                  self.save_to_db),
@@ -74,8 +72,8 @@ class User_Interface:
     # команды, связанные с базой данных
     def save_to_db(self):
         database = DB_Creator()
-        database.save_to_db(self.table_name_employers, self.request_hh.employers)
-        database.save_to_db(self.table_name_vacancies, self.request_hh.vacancies)
+        database.save_to_db(self.table_name_employers, self.data_storage_hh.employers)
+        database.save_to_db(self.table_name_vacancies, self.data_storage_hh.vacancies)
 
         print("\nДанные сохранены в базу данных.")
 
