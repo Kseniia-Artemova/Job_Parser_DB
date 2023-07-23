@@ -1,9 +1,9 @@
 import requests
 
-from vacancies.vacancy_ABC import Vacancy
+from entity.entity_abc import Entity
 
 
-class Vacancy_HH(Vacancy):
+class Vacancy_HH(Entity):
 
     cbr_rate_url = "https://www.cbr-xml-daily.ru/daily_json.js"
 
@@ -11,11 +11,11 @@ class Vacancy_HH(Vacancy):
 
         self.vacancy_id = vacancy_info.get("id")
         self.name = vacancy_info.get("name")
-        self.city = vacancy_info.get("area")
+        self.location = vacancy_info.get("area")
         self.currency = vacancy_info.get("salary")
         self.salary = vacancy_info.get("salary")
-        self.employer_id = vacancy_info.get("employer")
         self.url = vacancy_info.get("alternate_url")
+        self.employer_id = vacancy_info.get("employer")
 
     def __str__(self):
         return f"{self.name} (id: {self.vacancy_id})"
@@ -24,26 +24,24 @@ class Vacancy_HH(Vacancy):
         return f"{self.__class__.__name__}(" \
                f"vacancy_id='{self.vacancy_id}'" \
                f"name='{self.name}'" \
-               f"city='{self.city}'" \
-               f"salary_from={self.salary[0]}" \
-               f"salary_to={self.salary[1]}" \
+               f"location='{self.location}'" \
                f"currency='{self.currency}'" \
+               f"salary={self.salary}" \
+               f"url='{self.url}'" \
                f"employer_id='{self.employer_id}'" \
                f")"
 
     def __setattr__(self, key, value):
-        especial_keys = ("city", "salary", "currency", "employer_id")
+        especial_keys = ("location", "salary", "currency", "employer_id")
 
         if key in especial_keys and value:
 
-            if key == "city":
-                super.__setattr__(self, key, value.get("name"))
+            if key == "location":
+                value = value.get("name")
 
             elif key == "currency":
                 if type(value) is dict:
-                    super.__setattr__(self, key, value.get("currency"))
-                else:
-                    super.__setattr__(self, key, value)
+                    value = value.get("currency")
 
             elif key == "salary":
                 amount_from = value.get("from")
@@ -55,13 +53,15 @@ class Vacancy_HH(Vacancy):
                     amount_to = self.convert_currency(amount_to, self.currency)
 
                 self.currency = "RUR"
-                super.__setattr__(self, key, (amount_from, amount_to))
+                value = (amount_from, amount_to)
 
             elif key == "employer_id":
-                super.__setattr__(self, key, value.get("id"))
+                value = value.get("id")
 
-        else:
-            super.__setattr__(self, key, value)
+        elif key == "salary" and not value:
+            value = (None, None)
+
+        super.__setattr__(self, key, value)
 
     def convert_currency(self, number: int | None, currency: str | None) -> int:
         """
@@ -82,6 +82,22 @@ class Vacancy_HH(Vacancy):
 
         return number_rub
 
-    def show_info(self):
-        for key, value in self.__dict__.items():
-            print(f"{key}: {value}")
+    def get_fields(self):
+        fields = []
+        for key in self.__dict__.keys():
+            if key == "salary":
+                fields.extend(["salary_min", "salary_max"])
+                continue
+            fields.append(key)
+
+        return tuple(fields)
+
+    def get_values(self):
+        values = []
+        for value in self.__dict__.values():
+            if isinstance(value, tuple):
+                values.extend([*value])
+                continue
+            values.append(value)
+
+        return tuple(map(self._convert_to_str, values))
