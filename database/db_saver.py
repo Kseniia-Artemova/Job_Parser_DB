@@ -5,7 +5,7 @@ from utils import config
 from entity.entity_abc import Entity
 
 
-class DB_Creator:
+class DB_Saver:
 
     table_script = "tables_creation.sql"
     starting_db = "db_config_starting.ini"

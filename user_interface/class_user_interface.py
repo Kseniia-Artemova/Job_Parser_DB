@@ -1,4 +1,4 @@
-from database.db_creator import DB_Creator
+from database.db_saver import DB_Saver
 from database.db_manager import DB_Manager
 from data_storage.data_storage_hh import Data_Storage_HH
 from utils import accept_command, run_command
@@ -73,7 +73,7 @@ class User_Interface:
 
     # команды, связанные с базой данных
     def save_to_db(self):
-        database = DB_Creator()
+        database = DB_Saver()
         database.save_to_db(self.table_name_employers, self.data_storage_hh.employers)
         database.save_to_db(self.table_name_vacancies, self.data_storage_hh.vacancies)
 
