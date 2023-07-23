@@ -1,5 +1,7 @@
 from database.db_creator import DB_Creator
+from database.db_manager import DB_Manager
 from data_storage.data_storage_hh import Data_Storage_HH
+from utils import accept_command, run_command
 
 
 class User_Interface:
@@ -61,8 +63,8 @@ class User_Interface:
         self.show_menu()
 
         while True:
-            command = self._accept_command()
-            self._run_command(command)
+            command = accept_command(self.commands)
+            run_command(self.commands, command)
 
     @staticmethod
     def exit():
@@ -78,17 +80,6 @@ class User_Interface:
         print("\nДанные сохранены в базу данных.")
 
     def enter_db(self):
-        pass
-
-    # вспомогательные
-    def _accept_command(self):
-        while True:
-            command = input("\nКоманда: ").lower().strip()
-            if command not in self.commands:
-                print("Такая команда не существует. Попробуйте ещё раз.")
-                continue
-
-            return command
-
-    def _run_command(self, command):
-        self.commands[command][1]()
+        db_manager = DB_Manager()
+        db_manager()
+        self.show_menu()

@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 
 
-def config(path_to_file="database_config.ini", section="postgresql"):
+def config(path_to_file, section="postgresql"):
     # create a parser
     parser = ConfigParser()
     # read config file
@@ -15,3 +15,17 @@ def config(path_to_file="database_config.ini", section="postgresql"):
         raise Exception(
             'Section {0} is not found in the {1} file.'.format(section, path_to_file))
     return db
+
+
+def accept_command(commands):
+    while True:
+        command = input("\nКоманда: ").lower().strip()
+        if command not in commands:
+            print("Такая команда не существует. Попробуйте ещё раз.")
+            continue
+
+        return command
+
+
+def run_command(commands, command):
+    commands[command][1]()
