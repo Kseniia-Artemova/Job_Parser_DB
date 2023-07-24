@@ -19,19 +19,19 @@ class DB_Manager:
                  self.show_menu),
             "1":
                 ("Вывести список всех компаний и количество вакансий у каждой компании",
-                 self.get_companies_and_vacancies_count),
+                 self.run_sql_query),
             "2":
                 ("Вывести список всех вакансий с указанием названия компании",
-                 self.get_all_vacancies),
+                 self.run_sql_query),
             "3":
                 ("Вывести среднюю зарплату по вакансиям",
-                 self.get_avg_salary),
+                 self.run_sql_query),
             "4":
                 ("Вывести список всех вакансий, у которых зарплата выше средней по всем вакансиям",
-                 self.get_vacancies_with_higher_salary),
+                 self.run_sql_query),
             "5":
                 ("Вывести список всех вакансий, в названии которых содержатся переданное в метод слово, например 'python'",
-                 self.get_vacancies_with_keyword),
+                 self.run_sql_query),
             "exit":
                 ("Выход из программы", None)
         }
@@ -47,7 +47,13 @@ class DB_Manager:
             if command == "exit":
                 print("\nВы вышли из режима работы с базой данных.")
                 return
-            run_command(self.commands, command)
+            elif command in ("1", "2", "3", "4", "5"):
+                substitutions = None
+                if command == "5":
+                    substitutions = self._get_substitutions()
+                run_command(self.commands, command, command, substitutions)
+            else:
+                run_command(self.commands, command)
 
     # Команды основного меню
     def show_menu(self):
@@ -55,23 +61,24 @@ class DB_Manager:
         for command, description in self.commands.items():
             print(f"\t\033[34m{command}\033[0m - {description[0]}")
 
-    def get_companies_and_vacancies_count(self):
-        self._run_sql_query("1")
+    def run_sql_query(self, command, substitutions=None):
 
-    def get_all_vacancies(self):
-        self._run_sql_query("2")
+        query = self._get_query(command)
 
-    def get_avg_salary(self):
-        self._run_sql_query("3")
+        if substitutions:
+            for substitution in substitutions:
+                query = query.replace("placeholder", substitution, 1)
 
-    def get_vacancies_with_higher_salary(self):
-        self._run_sql_query("4")
+        conn = psycopg2.connect(**self.db_parameters)
+        cur = conn.cursor()
+        cur.execute(query)
+        response = self._create_table(cur, cur.fetchall())
 
-    def get_vacancies_with_keyword(self):
-        keyword = input("\nПожалуйста, введите ключевое слово для поиска совпадений в списке вакансий:\n")
-        substitutions = (keyword.capitalize(), keyword.lower())
+        conn.commit()
+        cur.close()
+        conn.close()
 
-        self._run_sql_query("5", substitutions)
+        print(response)
 
     # Вспомогательные функции
     @staticmethod
@@ -104,21 +111,7 @@ class DB_Manager:
 
         return query
 
-    def _run_sql_query(self, command, substitutions=None):
-
-        query = self._get_query(command)
-
-        if substitutions:
-            for substitution in substitutions:
-                query = query.replace("placeholder", substitution, 1)
-
-        conn = psycopg2.connect(**self.db_parameters)
-        cur = conn.cursor()
-        cur.execute(query)
-        response = self._create_table(cur, cur.fetchall())
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        print(response)
+    @staticmethod
+    def _get_substitutions():
+        keyword = input("\nПожалуйста, введите ключевое слово для поиска совпадений в списке вакансий:\n")
+        return keyword.capitalize(), keyword.lower()
