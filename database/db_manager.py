@@ -47,7 +47,7 @@ class DB_Manager:
             if command == "exit":
                 print("\nВы вышли из режима работы с базой данных.")
                 return
-            elif command in ("1", "2", "3", "4", "5"):
+            elif command.isdigit():
                 substitutions = None
                 if command == "5":
                     substitutions = self._get_substitutions()

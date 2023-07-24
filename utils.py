@@ -27,5 +27,5 @@ def accept_command(commands):
         return command
 
 
-def run_command(commands, command):
-    commands[command][1]()
+def run_command(commands, command, *args, **kwargs):
+    commands[command][1](*args, **kwargs)
