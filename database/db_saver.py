@@ -40,6 +40,40 @@ class DB_Saver(DB_Interaction):
         self.make_connection()
         self._create_tables()
 
+    def save_to_db(self, table_name: str, data: dict[Entity]) -> None:
+        """
+        Сохраняет в указанную таблицу данные, полученные из объекта-наследника класса Entity
+
+        :param table_name: имя таблицы, в которую будут сохранены значения
+        :param data: словарь с сущностями, информацию о которых следует сохранить в таблицу
+        """
+
+        cur = self.conn.cursor()
+
+        for item in data.values():
+            fields = item.get_fields()
+            values = item.get_values()
+            cur.execute(self._get_insert_string(table_name, fields), values)
+
+        cur.close()
+        self.conn.commit()
+
+    def clear_db(self) -> None:
+        """Удаляет все значения из таблиц базы данных"""
+
+        self._run_script(self.path_to_table_remove_script)
+
+    def make_connection(self) -> None:
+        """Устанавливает соединение с базой данных"""
+
+        setattr(self, "conn", psycopg2.connect(**self.target_parameters_db))
+
+    def close_connection_db(self) -> None:
+        """Закрывает соединение с базой данных"""
+        if self.conn:
+            self.conn.close()
+            self.conn = None
+
     def _create_db(self) -> None:
         """
         Создаёт базу данных с именем, указанным в конфигурационном файле target_db,
@@ -88,36 +122,3 @@ class DB_Saver(DB_Interaction):
         """
 
         self._run_script(self.path_to_table_creation_script)
-
-    def save_to_db(self, table_name: str, data: dict[Entity]) -> None:
-        """
-        Сохраняет в указанную таблицу данные, полученные из объекта-наследника класса Entity
-
-        :param table_name: имя таблицы, в которую будут сохранены значения
-        :param data: словарь с сущностями, информацию о которых следует сохранить в таблицу
-        """
-
-        cur = self.conn.cursor()
-
-        for item in data.values():
-            fields = item.get_fields()
-            values = item.get_values()
-            cur.execute(self._get_insert_string(table_name, fields), values)
-
-        cur.close()
-        self.conn.commit()
-
-    def clear_db(self) -> None:
-        """Удаляет все значения из таблиц базы данных"""
-
-        self._run_script(self.path_to_table_remove_script)
-
-    def make_connection(self) -> None:
-        """Устанавливает соединение с базой данных"""
-
-        setattr(self, "conn", psycopg2.connect(**self.target_parameters_db))
-
-    def close_connection_db(self) -> None:
-        """Закрывает соединение с базой данных"""
-        self.conn.close()
-        self.conn = None

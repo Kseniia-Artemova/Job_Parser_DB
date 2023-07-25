@@ -53,7 +53,7 @@ class DB_Interaction(ABC):
     def __del__(self) -> None:
         """Метод, предписывающий закрыть соединение с базой данных при удалении объекта"""
 
-        if hasattr(self, 'conn'):
+        if hasattr(self, 'conn') and self.conn is not None:
             self.conn.close()
 
     @abstractmethod

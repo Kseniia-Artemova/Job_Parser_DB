@@ -92,8 +92,9 @@ class DB_Manager(DB_Interaction, User_Interaction_Mixin):
 
     def close_connection_db(self) -> None:
         """Закрывает соединение с базой данных"""
-        self.conn.close()
-        self.conn = None
+        if self.conn:
+            self.conn.close()
+            self.conn = None
 
     def get_companies_and_vacancies_count(self) -> list[tuple]:
         """Возвращает список всех компаний и количество вакансий у каждой компании"""

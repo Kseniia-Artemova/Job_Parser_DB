@@ -121,7 +121,6 @@ class User_Interface(User_Interaction_Mixin):
         results = db_manager()
 
         db_manager.close_connection_db()
-        print(results)
 
         self.show_menu()
         self.database.make_connection()

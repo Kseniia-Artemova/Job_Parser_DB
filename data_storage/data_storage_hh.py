@@ -37,14 +37,18 @@ class Data_Storage_HH(Data_Storage):
         print("\nПодождите минутку, ищу подходящие компании...")
 
         results = self._cyclic_response(self.url_employers, employer_name)
+        counter = 0
 
         for result in results:
-            print(f"\nid: {result.get('id')}"
-                  f"\nНазвание: {result.get('name')}"
-                  f"\nurl: {result.get('alternate_url')}"
-                  f"\nОткрытых вакансий: {result.get('open_vacancies')}")
+            open_vacancies = result.get('open_vacancies')
+            if open_vacancies > 0:
+                counter += 1
+                print(f"\nid: {result.get('id')}"
+                      f"\nНазвание: {result.get('name')}"
+                      f"\nurl: {result.get('alternate_url')}"
+                      f"\nОткрытых вакансий: {open_vacancies}")
 
-        print(f"\nВсего найдено: {len(results)}")
+        print(f"\nВсего найдено: {len(results)}, с активными вакансиями: {counter}")
 
     def add_employers(self) -> None:
         """
