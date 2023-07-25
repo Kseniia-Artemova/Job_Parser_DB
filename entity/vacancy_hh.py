@@ -1,13 +1,20 @@
 import requests
 
 from entity.entity_abc import Entity
+from typing import Any
 
 
 class Vacancy_HH(Entity):
+    """Класс для описания вакансии, полученной с сайта https://hh.ru"""
 
+    # ссылка на данные о текущем курсе валют центрального банка России
     cbr_rate_url = "https://www.cbr-xml-daily.ru/daily_json.js"
 
-    def __init__(self, vacancy_info: dict):
+    def __init__(self, vacancy_info: dict) -> None:
+        """
+        Инициализатор класса, задаёт свойства объекта класса,
+        используя полученный словарь с данными
+        """
 
         self.vacancy_id = vacancy_info.get("id")
         self.name = vacancy_info.get("name")
@@ -17,10 +24,14 @@ class Vacancy_HH(Entity):
         self.url = vacancy_info.get("alternate_url")
         self.employer_id = vacancy_info.get("employer")
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Строковое представление вакансии для пользователя"""
+
         return f"{self.name} (id: {self.vacancy_id})"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Строковое представление вакансии для режима отладки"""
+
         return f"{self.__class__.__name__}(" \
                f"vacancy_id='{self.vacancy_id}'" \
                f"name='{self.name}'" \
@@ -31,7 +42,16 @@ class Vacancy_HH(Entity):
                f"employer_id='{self.employer_id}'" \
                f")"
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: Any) -> None:
+        """
+        Настраивает установление значений для некоторых ключей, значения которых могут обладать
+        большей вложенностью, чем остальные.
+        Также конвертирует сумму зарплаты в рубли, если она представлена в другой валюте
+
+        :param key: имя свойства класса
+        :param value: значение свойства класса
+        """
+
         especial_keys = ("location", "salary", "currency", "employer_id")
 
         if key in especial_keys and value:
@@ -82,7 +102,9 @@ class Vacancy_HH(Entity):
 
         return number_rub
 
-    def get_fields(self):
+    def get_fields(self) -> tuple[str]:
+        """Возвращает название полей для заполнения таблицы в базе данных"""
+
         fields = []
         for key in self.__dict__.keys():
             if key == "salary":
@@ -92,7 +114,14 @@ class Vacancy_HH(Entity):
 
         return tuple(fields)
 
-    def get_values(self):
+    def get_values(self) -> tuple:
+        """
+        Возвращает значения атрибутов для заполнения таблицы в базе данных.
+        Значения должны быть согласованы с названиями полей, возвращаемых get_fields
+        и идти в порядке, соответствующем названиям полей.
+        Значения должны быть приведены к строковому формату
+        """
+
         values = []
         for value in self.__dict__.values():
             if isinstance(value, tuple):
