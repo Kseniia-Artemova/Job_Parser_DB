@@ -108,7 +108,7 @@ class Data_Storage_HH(Data_Storage):
         """
 
         if not self.employers:
-            print("\nСначала укажите компании для поиска командой add employers.")
+            print("\nСначала укажите компании для поиска командой\033[32m add employers\033[0m.")
             return
 
         keyword = input("\nВведите название вакансии или ключевое слово для поиска:\n").lower().strip()
