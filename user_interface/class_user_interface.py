@@ -1,10 +1,10 @@
 from database.db_saver import DB_Saver
 from database.db_manager import DB_Manager
 from data_storage.data_storage_hh import Data_Storage_HH
-from utils import accept_command, run_command
+from mixins.user_interaction import User_Interaction_Mixin
 
 
-class User_Interface:
+class User_Interface(User_Interaction_Mixin):
     """
     Класс, предоставляющий интерфейс для взаимодействия с пользователем
     """
@@ -13,13 +13,20 @@ class User_Interface:
     table_name_employers = "employers"
     table_name_vacancies = "vacancies"
 
+    # цвет текста меню
+    text_color = "\033[32m"
+
     def __init__(self) -> None:
         """
         Инициализатор объектов класса.
-        Создаёт объект для поиска и хранения данных, инициализирует меню.
+
+        Создаёт объект для поиска и хранения данных;
+        Создаёт объект для сохранения значений в базу данных;
+        Инициализирует меню
         """
 
         self.data_storage_hh = Data_Storage_HH()
+        self.database = DB_Saver()
 
         # псевдоним_команды: (описание, команда)
         self.commands = {
@@ -49,24 +56,17 @@ class User_Interface:
                 ("Очистить список найденных вакансий",
                  self.data_storage_hh.clear_vacancies),
             "save to db":
-                ("Сохранить найденные вакансии в базу данных",
+                ("Сохранить найденные вакансии и компании в базу данных",
                  self.save_to_db),
+            "clear db":
+                ("Очистить существующие таблицы в базе данных",
+                 self.clear_db),
             "enter db":
                 ("Войти в режим взаимодействия с базой данных",
                  self.enter_db),
             "exit":
                 ("Выйти из программы", None)
         }
-
-    # общие команды
-    def show_menu(self) -> None:
-        """
-        Выводит меню для пользователя в читаемом виде.
-        """
-
-        print()
-        for command, description in self.commands.items():
-            print(f"\t\033[32m{command}\033[0m - {description[0]}")
 
     def __call__(self) -> None:
         """
@@ -79,32 +79,49 @@ class User_Interface:
         self.show_menu()
 
         while True:
-            command = accept_command(self.commands)
+            command = self.accept_command()
             if command == "exit":
                 print("\nВсего доброго! Заходите ещё!")
                 return
-            run_command(self.commands, command)
+            self.run_command(command)
 
     # команды, связанные с базой данных
     def save_to_db(self) -> None:
         """
-        Сохраняет данные в базу данных.
-        Для сохранения в базу данных создаётся объект класса DB_Saver,
-        который создает базу данных, основные таблицы и заполняет их полученными в ходе поиска данными.
+        Сохраняет найденные вакансии и компании в базу данных
         """
 
-        database = DB_Saver()
-        database.save_to_db(self.table_name_employers, self.data_storage_hh.employers)
-        database.save_to_db(self.table_name_vacancies, self.data_storage_hh.vacancies)
+        self.database.save_to_db(self.table_name_employers, self.data_storage_hh.employers)
+        self.database.save_to_db(self.table_name_vacancies, self.data_storage_hh.vacancies)
 
         print("\nДанные сохранены в базу данных.")
+
+    def clear_db(self) -> None:
+        """Удаляет все значения из таблиц базы данных"""
+
+        self.database.clear_db()
+        print("\nВсе значения были удалены из таблиц.")
 
     def enter_db(self) -> None:
         """
         Создаёт объект класса DB_Manager и вызывает его для имитации режима взаимодействия с базой данных.
         При выходе из режима работы с базой данных, предоставляет пользователю основное меню
+
+        Закрывает открытое соединение объекта класса DB_Saver, чтобы дать объекту класса DB_Manager
+        установить своё собственное соединение.
+        При выходе из режима взаимодействия с базой данных соединение DB_Manager закрывается,
+        а соединение DB_Saver возобновляется
         """
 
+        self.database.close_connection_db()
+
         db_manager = DB_Manager()
-        db_manager()
+
+        # сюда записываются результаты запросов одной сессии режима работы с базой данных
+        results = db_manager()
+
+        db_manager.close_connection_db()
+        print(results)
+
         self.show_menu()
+        self.database.make_connection()

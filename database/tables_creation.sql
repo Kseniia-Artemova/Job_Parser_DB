@@ -13,18 +13,11 @@ SET default_tablespace = '';
 
 SET default_with_oids = false;
 
----
---- drop tables
----
-
-DROP TABLE IF EXISTS vacancies;
-DROP TABLE IF EXISTS employers CASCADE;
-
 --
 -- Name: employers; Type: TABLE; Schema: public; Owner: -; Tablespace:
 --
 
-CREATE TABLE employers (
+CREATE TABLE IF NOT EXISTS employers (
     employer_id int,
     name varchar(200) NOT NULL,
     url varchar(50) NOT NULL,
@@ -37,7 +30,7 @@ CREATE TABLE employers (
 -- Name: vacancies; Type: TABLE; Schema: public; Owner: -; Tablespace:
 --
 
-CREATE TABLE vacancies (
+CREATE TABLE IF NOT EXISTS vacancies (
     vacancy_id int,
     name varchar(200) NOT NULL,
     location varchar(50) NOT NULL,

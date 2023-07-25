@@ -15,6 +15,10 @@ class Data_Storage_HH(Data_Storage):
 
     # максимальное количество вакансий, которое пользователь может запросить за один раз
     max_vacancies = 500
+    # максимальное разрешенное количество страниц для выдачи результатов запроса
+    max_page = 100
+    # количество результатов поиска на одной странице
+    per_page = 50
 
     def __init__(self) -> None:
         """
@@ -26,7 +30,7 @@ class Data_Storage_HH(Data_Storage):
         self.employers = {}
 
     def find_employers(self) -> None:
-        """Ищет и выводит на экран компании, в названии которых есть введённый пользователем текст."""
+        """Ищет и выводит на экран компании, в названии которых есть введённый пользователем текст"""
 
         employer_name = input("\nВведите название компании: ").lower().strip()
 
@@ -100,11 +104,11 @@ class Data_Storage_HH(Data_Storage):
     def find_vacancies(self) -> None:
         """
         Находит и добавляет в словарь вакансии тех компаний, которые есть в словаре employers.
-        Пользователь может указать ключевое слово и требуемое количество вакансий для поиска.
+        Пользователь может указать ключевое слово и требуемое количество вакансий для поиска
 
         При указании некорректного числа вакансий для поиска (больше максимального разрешенного или
-        нечисловое) устанавливается значение по умолчанию = 50
-        Поиск вакансий при условии пустого словаря employers невозможен.
+        нечисловое) устанавливается значение по умолчанию = 50.
+        Поиск вакансий при условии пустого словаря employers невозможен
         """
 
         if not self.employers:
@@ -127,6 +131,7 @@ class Data_Storage_HH(Data_Storage):
         employers = ["employer_id=" + company for company in self.employers.keys()]
         url = self.url_vacancies + "?" + "&".join(employers)
 
+        print("\nПодождите минутку, ищу подходящие вакансии...")
         results = self._cyclic_response(url, keyword, number)[:number]
 
         if not results:
@@ -183,7 +188,7 @@ class Data_Storage_HH(Data_Storage):
         :param number: искомое количество элементов
         """
         page = 0
-        per_page = 50
+        per_page = self.per_page
         parameters = {"text": text, "page": page, "per_page": per_page}
         results = []
 
@@ -196,8 +201,9 @@ class Data_Storage_HH(Data_Storage):
 
             if number and len(results) > number:
                 break
-
-            if parameters["page"] >= total_pages:
+            elif parameters["page"] >= total_pages:
+                break
+            elif parameters["page"] >= self.max_page:
                 break
 
         return results
