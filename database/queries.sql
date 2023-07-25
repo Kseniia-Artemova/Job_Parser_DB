@@ -12,7 +12,7 @@ SELECT
     open_vacancies,
     COUNT(vacancy_id) AS number_vacancies
 FROM employers e
-JOIN vacancies v
+LEFT JOIN vacancies v
     USING(employer_id)
 GROUP BY e.employer_id;
 
