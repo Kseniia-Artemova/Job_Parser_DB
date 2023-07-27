@@ -2,6 +2,7 @@ from database.db_saver import DB_Saver
 from database.db_manager import DB_Manager
 from data_storage.data_storage_hh import Data_Storage_HH
 from mixins.user_interaction import User_Interaction_Mixin
+from utils import basic_logger
 
 
 class User_Interface(User_Interaction_Mixin):
@@ -111,6 +112,9 @@ class User_Interface(User_Interaction_Mixin):
         установить своё собственное соединение.
         При выходе из режима взаимодействия с базой данных соединение DB_Manager закрывается,
         а соединение DB_Saver возобновляется
+
+        Результаты, полученные при запросах одной сессии режима взаимодействия с базой данных
+        записываются в файл лога (logs/query_log.log)
         """
 
         self.database.close_connection_db()
@@ -121,6 +125,7 @@ class User_Interface(User_Interaction_Mixin):
         results = db_manager()
 
         db_manager.close_connection_db()
+        basic_logger(results)
 
         self.show_menu()
         self.database.make_connection()
